@@ -12,14 +12,13 @@ import (
 
 type PermitLicenseRepository struct{}
 
-func (r *PermitLicenseRepository) CreatePermitLicense(permit *model.PermitLicense) error {
-
-	return config.DB.Create(permit).Error
+func (r *PermitLicenseRepository) CreatePermitLicense(tx *gorm.DB, permit *model.PermitLicense) error {
+	return tx.Create(permit).Error
 }
 
-func (r *PermitLicenseRepository) CreateApprovalHistory(history *model.ApprovalHistory) error {
+func (r *PermitLicenseRepository) CreateApprovalHistory(tx *gorm.DB, history *model.ApprovalHistory) error {
 
-	return config.DB.Create(history).Error
+	return tx.Create(history).Error
 }
 
 func (r *PermitLicenseRepository) FindStatusByCode(code string) (*model.ApprovalStatus, error) {
@@ -117,6 +116,7 @@ func (r *PermitLicenseRepository) FindByID(id string) (*model.PermitLicense, err
 		Preload("Unit").
 		Preload("RelatedPrevDocument").
 		Preload("RelatedPrevDocument.CurrentStatus").
+		Preload("RelatedNextDocument").
 		Preload("ApprovalHistories").
 		Preload("ApprovalHistories.Approver").
 		Preload("ApprovalHistories.Approver.Unit").
@@ -168,4 +168,22 @@ func (r *PermitLicenseRepository) UpdateTx(tx *gorm.DB, id string, permit *model
 
 func (r *PermitLicenseRepository) CreateApprovalHistoryTx(tx *gorm.DB, history *model.ApprovalHistory) error {
 	return tx.Create(history).Error
+}
+
+func (r *PermitLicenseRepository) UpdateExtendRelation(
+	tx *gorm.DB,
+	prevID string,
+	nextID string,
+) error {
+
+	return tx.Model(
+		&model.PermitLicense{},
+	).Where(
+		"id = ?",
+		prevID,
+	).Updates(map[string]interface{}{
+		"related_next_document_id": nextID,
+
+		"is_extend": true,
+	}).Error
 }

@@ -15,6 +15,11 @@ import {
 } from "react"
 
 import {
+  LeftOutlined,
+  RightOutlined,
+} from "@ant-design/icons"
+
+import {
   useNavigate,
   useParams,
 } from "react-router-dom"
@@ -79,7 +84,7 @@ const PermitLicenseDetailPage =
 
       fetchDetail()
 
-    }, [])
+    }, [id])
 
     return (
       <div>
@@ -117,7 +122,7 @@ const PermitLicenseDetailPage =
             {
                 user?.role === "USER_UNIT" &&
                 data?.current_status.code ===
-                "APPROVED" && (
+                "APPROVED" && !data?.is_extend && (
 
                 <Button
                     type="primary"
@@ -206,49 +211,66 @@ const PermitLicenseDetailPage =
 
             </Descriptions.Item>
 
-            {data
-                ?.related_prev_document && (
+            {
+            data?.related_prev_document && (
 
                 <Descriptions.Item
-                    label="Previous Document"
+                label="Previous Document"
                 >
 
-                    <Space
-                    direction="vertical"
-                    >
-
-                    <Button
-                        type="link"
-                        style={{
-                        padding: 0,
-                        }}
-                        onClick={() =>
-                        navigate(
-                            `/permit-license/${data.related_prev_document?.id}`
-                        )
-                        }
-                    >
-                        {
-                        data
-                            .related_prev_document
-                            ?.document_name
-                        }
-                    </Button>
-
-                    <Text type="secondary">
-                        Expired At:
-                        {" "}
-                        {
-                        data
-                            .related_prev_document
-                            ?.expired_at
-                        }
-                    </Text>
-
-                    </Space>
+                <Button
+                    type="link"
+                    icon={<LeftOutlined />}
+                    style={{
+                    padding: 0,
+                    }}
+                    onClick={() =>
+                    navigate(
+                        `/permit-license/${data.related_prev_document?.id}`
+                    )
+                    }
+                >
+                    {
+                    data
+                        .related_prev_document
+                        ?.document_name
+                    }
+                </Button>
 
                 </Descriptions.Item>
-                )}
+            )
+            }
+
+            {
+            data?.related_next_document && (
+
+                <Descriptions.Item
+                label="Next Document"
+                >
+
+                <Button
+                    type="link"
+                    iconPosition="end"
+                    icon={<RightOutlined />}
+                    style={{
+                    padding: 0,
+                    }}
+                    onClick={() =>
+                    navigate(
+                        `/permit-license/${data.related_next_document?.id}`
+                    )
+                    }
+                >
+                    {
+                    data
+                        .related_next_document
+                        ?.document_name
+                    }
+                </Button>
+
+                </Descriptions.Item>
+            )
+            }
 
             {data
               ?.rejected_reason && (

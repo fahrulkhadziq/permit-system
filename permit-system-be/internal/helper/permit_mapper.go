@@ -34,6 +34,7 @@ func ToPermitLicenseDetailsResponse(permit *model.PermitLicense) dto.PermitLicen
 		ApprovedAt:     permit.ApprovedAt,
 		RejectedReason: permit.RejectedReason,
 		IsActive:       permit.IsActive,
+		IsExtend:       permit.IsExtend,
 		MasterDocument: dto.MasterDocumentResponse{
 			ID:          permit.MasterDocument.ID.String(),
 			Code:        permit.MasterDocument.Code,
@@ -64,11 +65,21 @@ func ToPermitLicenseDetailsResponse(permit *model.PermitLicense) dto.PermitLicen
 	}
 
 	if permit.RelatedPrevDocument != nil {
-		response.RelatedPrevDocument = &dto.RelatedPermitResponse{
-			ID:           permit.RelatedPrevDocument.ID.String(),
-			DocumentName: permit.RelatedPrevDocument.DocumentName,
-			ExpiredAt:    permit.RelatedPrevDocument.ExpiredAt,
-		}
+		response.RelatedPrevDocument =
+			&dto.RelatedPermitResponse{
+				ID:           permit.RelatedPrevDocument.ID.String(),
+				DocumentName: permit.RelatedPrevDocument.DocumentName,
+				ExpiredAt:    permit.RelatedPrevDocument.ExpiredAt,
+			}
+	}
+
+	if permit.RelatedNextDocument != nil {
+		response.RelatedNextDocument =
+			&dto.RelatedPermitResponse{
+				ID:           permit.RelatedNextDocument.ID.String(),
+				DocumentName: permit.RelatedNextDocument.DocumentName,
+				ExpiredAt:    permit.RelatedNextDocument.ExpiredAt,
+			}
 	}
 
 	for _, history := range permit.ApprovalHistories {

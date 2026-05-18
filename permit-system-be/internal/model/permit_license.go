@@ -12,6 +12,7 @@ type PermitLicense struct {
 	CurrentStatusID string `gorm:"index"`
 
 	RelatedPrevDocumentID *string `gorm:"index"`
+	RelatedNextDocumentID *string `gorm:"index"`
 
 	DocumentName string
 	Description  string
@@ -25,6 +26,7 @@ type PermitLicense struct {
 	RejectedReason string
 
 	IsActive bool `gorm:"default:true"`
+	IsExtend bool `gorm:"default:false"`
 
 	MasterDocument MasterDocument `gorm:"foreignKey:MasterDocumentID"`
 	User           User           `gorm:"foreignKey:UploadedBy"`
@@ -33,6 +35,8 @@ type PermitLicense struct {
 	CurrentStatus ApprovalStatus `gorm:"foreignKey:CurrentStatusID"`
 
 	RelatedPrevDocument *PermitLicense `gorm:"foreignKey:RelatedPrevDocumentID"`
+
+	RelatedNextDocument *PermitLicense `gorm:"foreignKey:RelatedNextDocumentID"`
 
 	ApprovalHistories []ApprovalHistory `gorm:"foreignKey:PermitLicenseID"`
 }

@@ -83,76 +83,97 @@ func SaveFile(fileHeader *multipart.FileHeader) (string, error) {
 
 func (s *PermitLicenseService) Create(req dto.CreatePermitLicenseRequest, fileHeader *multipart.FileHeader, userID string, unitID string) error {
 
-	err := validatePDF(fileHeader)
-	if err != nil {
-		return err
-	}
+	return repository.WithTransaction(
+		func(tx *gorm.DB) error {
+			err := validatePDF(fileHeader)
+			if err != nil {
+				return err
+			}
 
-	filePath, err := SaveFile(fileHeader)
-	if err != nil {
-		return err
-	}
+			filePath, err := SaveFile(fileHeader)
+			if err != nil {
+				return err
+			}
 
-	status, err := s.Repo.FindStatusByCode(
-		constants.StatusWaitingApproval,
-	)
-	if err != nil {
-		return err
-	}
+			status, err := s.Repo.FindStatusByCode(
+				constants.StatusWaitingApproval,
+			)
+			if err != nil {
+				return err
+			}
 
-	expiredAt, err := time.Parse(
-		"2006-01-02",
-		req.ExpiredAt,
-	)
-	if err != nil {
-		return err
-	}
+			expiredAt, err := time.Parse(
+				"2006-01-02",
+				req.ExpiredAt,
+			)
+			if err != nil {
+				return err
+			}
 
-	permit := model.PermitLicense{
-		MasterDocumentID:      req.MaterDocumentID,
-		UploadedBy:            userID,
-		UnitID:                unitID,
-		CurrentStatusID:       status.ID.String(),
-		DocumentName:          req.DocumentName,
-		Description:           req.Description,
-		FileURL:               filePath,
-		FileSize:              fileHeader.Size,
-		ExpiredAt:             expiredAt,
-		RelatedPrevDocumentID: req.RelatedPrevDocumentID,
-	}
+			permit := model.PermitLicense{
+				MasterDocumentID:      req.MaterDocumentID,
+				UploadedBy:            userID,
+				UnitID:                unitID,
+				CurrentStatusID:       status.ID.String(),
+				DocumentName:          req.DocumentName,
+				Description:           req.Description,
+				FileURL:               filePath,
+				FileSize:              fileHeader.Size,
+				ExpiredAt:             expiredAt,
+				RelatedPrevDocumentID: req.RelatedPrevDocumentID,
+				IsExtend:              false,
+			}
 
-	err = s.Repo.CreatePermitLicense(&permit)
-	if err != nil {
-		return err
-	}
+			err = s.Repo.CreatePermitLicense(tx, &permit)
+			if err != nil {
+				return err
+			}
 
-	// email
-	headUser, _ := s.UserRepo.FindByRole("HEAD_UNIT")
-	emails := helper.ExtractEmails(headUser)
+			if req.RelatedPrevDocumentID != nil {
 
-	url := fmt.Sprintf(
-		"%s/documents/%s",
-		os.Getenv("APP_URL"),
-		permit.ID.String(),
-	)
+				err = s.Repo.UpdateExtendRelation(
+					tx,
+					*req.RelatedPrevDocumentID,
+					permit.ID.String(),
+				)
 
-	body := helper.WaitingApprovalEmail(
-		permit.DocumentName,
-		url,
-	)
+				if err != nil {
 
-	s.EmailService.SendAsync(emails, "New Document Waiting Approval", body)
+					tx.Rollback()
 
-	// end email
+					return err
+				}
+			}
 
-	history := model.ApprovalHistory{
-		PermitLicenseID: permit.ID.String(),
-		ApproverID:      userID,
-		StatusID:        status.ID.String(),
-		Notes:           "Document uploaded",
-	}
+			// email
+			headUser, _ := s.UserRepo.FindByRole("HEAD_UNIT")
+			emails := helper.ExtractEmails(headUser)
 
-	return s.Repo.CreateApprovalHistory(&history)
+			url := fmt.Sprintf(
+				"%s/documents/%s",
+				os.Getenv("APP_URL"),
+				permit.ID.String(),
+			)
+
+			body := helper.WaitingApprovalEmail(
+				permit.DocumentName,
+				url,
+			)
+
+			s.EmailService.SendAsync(emails, "New Document Waiting Approval", body)
+
+			// end email
+
+			history := model.ApprovalHistory{
+				PermitLicenseID: permit.ID.String(),
+				ApproverID:      userID,
+				StatusID:        status.ID.String(),
+				Notes:           "Document uploaded",
+			}
+
+			return s.Repo.CreateApprovalHistory(tx, &history)
+
+		})
 
 }
 

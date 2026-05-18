@@ -33,6 +33,11 @@ export interface ApprovalHistoryResponse {
   status: ApprovalStatusResponse
 }
 
+export interface RelatedPermitResponse {
+  id: string
+  document_name: string
+  expired_at: string
+}
 export interface PermitLicenseDetailResponse {
   id: string
 
@@ -48,6 +53,7 @@ export interface PermitLicenseDetailResponse {
   rejected_reason: string
 
   is_active: boolean
+  is_extend: boolean
 
   master_document:
     MasterDocumentResponse
@@ -59,11 +65,9 @@ export interface PermitLicenseDetailResponse {
   current_status:
     ApprovalStatusResponse
 
-  related_prev_document?: {
-    id: string
-    document_name: string
-    expired_at: string
-  }
+  related_prev_document?: RelatedPermitResponse
+
+  related_next_document?: RelatedPermitResponse
 
   approval_histories:
     ApprovalHistoryResponse[]

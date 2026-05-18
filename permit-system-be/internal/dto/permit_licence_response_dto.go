@@ -32,6 +32,8 @@ type PermitLicenseDetailResponse struct {
 
 	IsActive bool `json:"is_active"`
 
+	IsExtend bool `json:"is_extend"`
+
 	MasterDocument MasterDocumentResponse `json:"master_document"`
 
 	User UserResponse `json:"user"`
@@ -41,6 +43,8 @@ type PermitLicenseDetailResponse struct {
 	CurrentStatus ApprovalStatusResponse `json:"current_status"`
 
 	RelatedPrevDocument *RelatedPermitResponse `json:"related_prev_document"`
+
+	RelatedNextDocument *RelatedPermitResponse `json:"related_next_document"`
 
 	ApprovalHistories []ApprovalHistoryResponse `json:"approval_histories"`
 
