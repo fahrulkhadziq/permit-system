@@ -27,6 +27,10 @@ import type {
   PermitLicenseDetailResponse,
 } from "../../types/permit-license-detail"
 
+import {
+  getUser,
+} from "../../utils/auth"
+
 const { Title, Text } =
   Typography
 
@@ -34,6 +38,8 @@ const PermitLicenseDetailPage =
   () => {
 
     const navigate = useNavigate()
+
+    const user = getUser()
 
     const { id } = useParams()
 
@@ -79,29 +85,54 @@ const PermitLicenseDetailPage =
       <div>
 
         <Space
-          style={{
-            marginBottom: 16,
-          }}
-        >
-
-          <Button
-            onClick={() =>
-              navigate(-1)
-            }
-          >
-            Back
-          </Button>
-
-          <Title
-            level={3}
             style={{
-              margin: 0,
+                marginBottom: 16,
+                width: "100%",
+                justifyContent:
+                "space-between",
             }}
-          >
-            Document Detail
-          </Title>
+            >
 
-        </Space>
+            <Space>
+
+                <Button
+                onClick={() =>
+                    navigate(-1)
+                }
+                >
+                Back
+                </Button>
+
+                <Title
+                level={3}
+                style={{
+                    margin: 0,
+                }}
+                >
+                Document Detail
+                </Title>
+
+            </Space>
+
+            {
+                user?.role === "USER_UNIT" &&
+                data?.current_status.code ===
+                "APPROVED" && (
+
+                <Button
+                    type="primary"
+                    onClick={() =>
+                    navigate(
+                        `/my-activity/create?reference=${data.id}`
+                    )
+                    }
+                >
+                    Extend Permit
+                </Button>
+                )
+            }
+
+            </Space>
 
         <Card loading={loading}>
 
@@ -176,29 +207,48 @@ const PermitLicenseDetailPage =
             </Descriptions.Item>
 
             {data
-              ?.related_prev_document && (
+                ?.related_prev_document && (
 
-              <Descriptions.Item
-                label="Previous Document"
-              >
-
-                <Button
-                  type="link"
-                  onClick={() =>
-                    navigate(
-                      `/permit-license/${data.related_prev_document?.id}`
-                    )
-                  }
+                <Descriptions.Item
+                    label="Previous Document"
                 >
-                  {
-                    data
-                      .related_prev_document
-                      ?.document_name
-                  }
-                </Button>
 
-              </Descriptions.Item>
-            )}
+                    <Space
+                    direction="vertical"
+                    >
+
+                    <Button
+                        type="link"
+                        style={{
+                        padding: 0,
+                        }}
+                        onClick={() =>
+                        navigate(
+                            `/permit-license/${data.related_prev_document?.id}`
+                        )
+                        }
+                    >
+                        {
+                        data
+                            .related_prev_document
+                            ?.document_name
+                        }
+                    </Button>
+
+                    <Text type="secondary">
+                        Expired At:
+                        {" "}
+                        {
+                        data
+                            .related_prev_document
+                            ?.expired_at
+                        }
+                    </Text>
+
+                    </Space>
+
+                </Descriptions.Item>
+                )}
 
             {data
               ?.rejected_reason && (

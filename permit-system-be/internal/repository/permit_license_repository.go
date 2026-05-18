@@ -116,6 +116,7 @@ func (r *PermitLicenseRepository) FindByID(id string) (*model.PermitLicense, err
 		Preload("User.Unit").
 		Preload("Unit").
 		Preload("RelatedPrevDocument").
+		Preload("RelatedPrevDocument.CurrentStatus").
 		Preload("ApprovalHistories").
 		Preload("ApprovalHistories.Approver").
 		Preload("ApprovalHistories.Approver.Unit").

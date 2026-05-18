@@ -62,6 +62,7 @@ export interface PermitLicenseDetailResponse {
   related_prev_document?: {
     id: string
     document_name: string
+    expired_at: string
   }
 
   approval_histories:

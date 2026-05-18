@@ -8,6 +8,8 @@ import {
   Upload,
   message,
   Typography,
+  Alert,
+  Space,
 } from "antd"
 
 import {
@@ -24,6 +26,7 @@ import {
 import {
   useNavigate,
   useParams,
+  useSearchParams,
 } from "react-router-dom"
 
 import {
@@ -40,7 +43,8 @@ import type {
   MasterDocument,
 } from "../../types/master-document"
 
-const { Title } = Typography
+const { Title, Text } =
+  Typography
 
 const CreatePermitLicensePage =
   () => {
@@ -68,6 +72,40 @@ const CreatePermitLicensePage =
 
     const [file, setFile] =
       useState<File>()
+
+    const [
+      previousDocument,
+      setPreviousDocument,
+    ] = useState<any>(null)
+
+    const [searchParams] =
+    useSearchParams()
+
+    const referenceId =
+    searchParams.get("reference")
+
+    const fetchReference =
+        async () => {
+
+            if (!referenceId) return
+
+            try {
+
+            const response =
+                await getPermitLicenseDetail(
+                referenceId
+                )
+
+            form.setFieldsValue({
+                master_document_id:
+                response.master_document.id,
+            })
+
+            } catch (err) {
+
+            console.error(err)
+            }
+        }
 
     const fetchMasterDocuments =
       async () => {
@@ -118,6 +156,15 @@ const CreatePermitLicensePage =
               ),
           })
 
+          // ===== PREVIOUS DOC =====
+          setPreviousDocument({
+            id: response.id,
+            document_name:
+              response.document_name,
+            expired_at:
+              response.expired_at,
+          })
+
         } catch (err) {
 
           console.error(err)
@@ -134,26 +181,21 @@ const CreatePermitLicensePage =
 
       fetchDetail()
 
-    }, [id])
+    fetchReference()
+
+    }, [id, referenceId])
 
     const onFinish =
       async (values: any) => {
 
         try {
 
-          if (!file && !isEdit) {
+          if (!file) {
 
             message.error(
-              "File required",
-            )
-
-            return
-          }
-
-          if (!file && isEdit) {
-
-            message.error(
-              "Please upload revised PDF",
+              isEdit
+                ? "Please upload revised PDF"
+                : "File required",
             )
 
             return
@@ -164,7 +206,11 @@ const CreatePermitLicensePage =
           const payload = {
 
             master_document_id:
-              values.master_document_id,
+              referenceId
+                ? form.getFieldValue(
+                    "master_document_id"
+                    )
+                : values.master_document_id,
 
             document_name:
               values.document_name,
@@ -179,8 +225,13 @@ const CreatePermitLicensePage =
                 "YYYY-MM-DD",
               ),
 
-            file:
-              file as File,
+            file,
+
+            // ===== LINK HISTORY =====
+            related_prev_document_id:
+              isEdit
+                ? previousDocument?.id
+                : referenceId || undefined,
           }
 
           if (isEdit) {
@@ -236,6 +287,50 @@ const CreatePermitLicensePage =
           }
         </Title>
 
+        {/* ===== REVISION INFO ===== */}
+
+        {isEdit &&
+          previousDocument && (
+
+            <Alert
+              type="warning"
+              showIcon
+              style={{
+                marginBottom: 16,
+              }}
+              message="Revision Mode"
+              description={
+
+                <Space
+                  direction="vertical"
+                >
+
+                  <Text>
+                    This revised document
+                    will be linked to:
+                  </Text>
+
+                  <Text strong>
+                    {
+                      previousDocument.document_name
+                    }
+                  </Text>
+
+                  <Text type="secondary">
+                    Expired:
+                    {" "}
+                    {dayjs(
+                      previousDocument.expired_at,
+                    ).format(
+                      "DD MMM YYYY",
+                    )}
+                  </Text>
+
+                </Space>
+              }
+            />
+          )}
+
         <Card>
 
           <Form
@@ -256,7 +351,8 @@ const CreatePermitLicensePage =
 
               <Select
                 placeholder="Select master document"
-              >
+                disabled={!!referenceId}
+                >
 
                 {masterDocuments.map(
                   (
