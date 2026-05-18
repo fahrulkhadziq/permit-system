@@ -1,0 +1,10 @@
+# backend
+permit-system-be/.env
+permit-system-be/storage/
+
+# frontend
+permit-system-fe/node_modules/
+
+# system
+.DS_Store
+.vscode/
