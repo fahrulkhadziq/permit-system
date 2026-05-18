@@ -125,10 +125,10 @@ func (r *PermitLicenseRepository) FindByID(id string) (*model.PermitLicense, err
 	return &permit, err
 }
 
-func (r *PermitLicenseRepository) Update(id string, permit *model.PermitLicense) error {
+// func (r *PermitLicenseRepository) Update(id string, permit *model.PermitLicense) error {
 
-	return config.DB.Model(&model.PermitLicense{}).Where("id = ?", id).Updates(permit).Error
-}
+// 	return config.DB.Model(&model.PermitLicense{}).Where("id = ?", id).Updates(permit).Error
+// }
 
 func (r *PermitLicenseRepository) FindByIdFull(id string) (*model.PermitLicense, error) {
 
@@ -151,6 +151,8 @@ func (r *PermitLicenseRepository) FindByIdForUpdate(tx *gorm.DB, id string) (*mo
 	}).
 		Preload("CurrentStatus").
 		Preload("Unit").
+		Preload("User").
+		Preload("MasterDocument").
 		First(&permit, "id = ?", id).Error
 
 	return &permit, err

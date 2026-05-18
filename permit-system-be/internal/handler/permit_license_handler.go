@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"permit-license/internal/constants"
 	"permit-license/internal/dto"
 	"permit-license/internal/helper"
 	"permit-license/internal/service"
@@ -97,16 +96,9 @@ func (h *PermitLicenseHandler) FindAll(c echo.Context) error {
 		params.UnitID =
 			unitID
 
-		params.StatusCode =
-			constants.StatusWaitingApproval
 	}
 
 	// DIRECTOR
-	if role == "DIRECTOR" {
-
-		params.StatusCode =
-			constants.StatusWaitingDirectorApproval
-	}
 
 	data, totalRows, err := h.Service.FindAll(params)
 
@@ -165,4 +157,72 @@ func (h *PermitLicenseHandler) Download(c echo.Context) error {
 	}
 
 	return c.File(data.FileURL)
+}
+
+func (h *PermitLicenseHandler) Update(c echo.Context) error {
+
+	id := c.Param("id")
+
+	var req dto.UpdatePermitLicenseRequest
+
+	if err := c.Bind(&req); err != nil {
+
+		return c.JSON(
+			http.StatusBadRequest,
+			map[string]interface{}{
+				"message": "invalid request",
+			},
+		)
+	}
+
+	if err := helper.Validate.Struct(req); err != nil {
+
+		return c.JSON(
+			http.StatusBadRequest,
+			map[string]interface{}{
+				"message": err.Error(),
+			},
+		)
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+
+		return c.JSON(
+			http.StatusBadRequest,
+			map[string]interface{}{
+				"message": "file required",
+			},
+		)
+	}
+
+	token := c.Get("user").(*jwt.Token)
+
+	claims := token.Claims.(jwt.MapClaims)
+
+	userID := claims["user_id"].(string)
+
+	err = h.Service.Update(
+		id,
+		userID,
+		req,
+		file,
+	)
+
+	if err != nil {
+
+		return c.JSON(
+			http.StatusBadRequest,
+			map[string]interface{}{
+				"message": err.Error(),
+			},
+		)
+	}
+
+	return c.JSON(
+		http.StatusOK,
+		map[string]interface{}{
+			"message": "document revised successfully",
+		},
+	)
 }

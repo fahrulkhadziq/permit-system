@@ -10,10 +10,13 @@ import type {
   PermitLicenseDetailResponse,
 } from "../types/permit-license-detail"
 
-interface PermitLicenseQuery {
+export interface PermitLicenseQuery {
   page?: number
+  limit?: number
   search?: string
-  approval?: boolean
+  status?: string
+  sort?: string
+  order?: string
 }
 
 export const getPermitLicenses =
@@ -33,7 +36,7 @@ export const getPermitLicenses =
     return response.data
   }
 
-  export const getPermitLicenseDetail =
+export const getPermitLicenseDetail =
   async (
     id: string
   ): Promise<
@@ -47,7 +50,7 @@ export const getPermitLicenses =
     return response.data
   }
 
-  export const createPermitLicense =
+export const createPermitLicense =
   async (
     payload:
       CreatePermitLicensePayload
@@ -95,6 +98,66 @@ export const getPermitLicenses =
     const response =
       await api.post(
         "/permit-license",
+        formData,
+        {
+          headers: {
+            "Content-Type":
+              "multipart/form-data",
+          },
+        }
+      )
+
+    return response.data
+  }
+
+  export const updatePermitLicense =
+  async (
+    id: string,
+    payload:
+      CreatePermitLicensePayload
+  ) => {
+
+    const formData =
+      new FormData()
+
+    formData.append(
+      "master_document_id",
+      payload.master_document_id
+    )
+
+    formData.append(
+      "document_name",
+      payload.document_name
+    )
+
+    formData.append(
+      "description",
+      payload.description
+    )
+
+    formData.append(
+      "expired_at",
+      payload.expired_at
+    )
+
+    if (
+      payload.related_prev_document_id
+    ) {
+
+      formData.append(
+        "related_prev_document_id",
+        payload.related_prev_document_id
+      )
+    }
+
+    formData.append(
+      "file",
+      payload.file
+    )
+
+    const response =
+      await api.put(
+        `/permit-license/${id}`,
         formData,
         {
           headers: {

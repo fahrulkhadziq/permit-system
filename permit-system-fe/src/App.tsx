@@ -75,6 +75,13 @@ function App() {
             />
 
             <Route
+              path="/my-activity/:id/edit"
+              element={
+                <CreatePermitLicensePage />
+              }
+            />
+
+            <Route
               path="/approval"
               element={<ApprovalPage />}
             />

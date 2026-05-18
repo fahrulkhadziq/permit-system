@@ -23,32 +23,48 @@ import {
 
 import {
   useNavigate,
+  useParams,
 } from "react-router-dom"
 
 import {
   createPermitLicense,
+  getPermitLicenseDetail,
+  updatePermitLicense,
 } from "../../services/permit-license.service"
 
 import {
   getMasterDocuments,
 } from "../../services/master-document.service"
-import type { MasterDocument } from "../../types/master-document"
+
+import type {
+  MasterDocument,
+} from "../../types/master-document"
 
 const { Title } = Typography
 
 const CreatePermitLicensePage =
   () => {
 
-    const navigate = useNavigate()
+    const navigate =
+      useNavigate()
 
-    const [form] = Form.useForm()
+    const { id } =
+      useParams()
+
+    const isEdit =
+      !!id
+
+    const [form] =
+      Form.useForm()
 
     const [loading, setLoading] =
       useState(false)
 
-    const [masterDocuments,
-  setMasterDocuments] =
-  useState<MasterDocument[]>([])
+    const [
+      masterDocuments,
+      setMasterDocuments,
+    ] =
+      useState<MasterDocument[]>([])
 
     const [file, setFile] =
       useState<File>()
@@ -60,12 +76,12 @@ const CreatePermitLicensePage =
 
           const response =
             await getMasterDocuments(
-                1,
-                ""
+              1,
+              "",
             )
 
           setMasterDocuments(
-            response.data
+            response.data,
           )
 
         } catch (err) {
@@ -74,21 +90,70 @@ const CreatePermitLicensePage =
         }
       }
 
+    const fetchDetail =
+      async () => {
+
+        if (!id) return
+
+        try {
+
+          const response =
+            await getPermitLicenseDetail(
+              id,
+            )
+
+          form.setFieldsValue({
+            master_document_id:
+              response.master_document.id,
+
+            document_name:
+              response.document_name,
+
+            description:
+              response.description,
+
+            expired_at:
+              dayjs(
+                response.expired_at,
+              ),
+          })
+
+        } catch (err) {
+
+          console.error(err)
+
+          message.error(
+            "Failed load detail",
+          )
+        }
+      }
+
     useEffect(() => {
 
       fetchMasterDocuments()
 
-    }, [])
+      fetchDetail()
+
+    }, [id])
 
     const onFinish =
       async (values: any) => {
 
         try {
 
-          if (!file) {
+          if (!file && !isEdit) {
 
             message.error(
-              "File required"
+              "File required",
+            )
+
+            return
+          }
+
+          if (!file && isEdit) {
+
+            message.error(
+              "Please upload revised PDF",
             )
 
             return
@@ -96,7 +161,8 @@ const CreatePermitLicensePage =
 
           setLoading(true)
 
-          await createPermitLicense({
+          const payload = {
+
             master_document_id:
               values.master_document_id,
 
@@ -108,26 +174,49 @@ const CreatePermitLicensePage =
 
             expired_at:
               dayjs(
-                values.expired_at
+                values.expired_at,
               ).format(
-                "YYYY-MM-DD"
+                "YYYY-MM-DD",
               ),
 
-            file,
-          })
+            file:
+              file as File,
+          }
 
-          message.success(
-            "Document uploaded"
+          if (isEdit) {
+
+            await updatePermitLicense(
+              id,
+              payload,
+            )
+
+            message.success(
+              "Document revised successfully",
+            )
+
+          } else {
+
+            await createPermitLicense(
+              payload,
+            )
+
+            message.success(
+              "Document uploaded successfully",
+            )
+          }
+
+          navigate(
+            "/my-activity",
           )
-
-          navigate("/my-activity")
 
         } catch (err) {
 
           console.error(err)
 
           message.error(
-            "Upload failed"
+            isEdit
+              ? "Revise failed"
+              : "Upload failed",
           )
 
         } finally {
@@ -140,7 +229,11 @@ const CreatePermitLicensePage =
       <div>
 
         <Title level={3}>
-          Upload Document
+          {
+            isEdit
+              ? "Revise Document"
+              : "Upload Document"
+          }
         </Title>
 
         <Card>
@@ -166,7 +259,9 @@ const CreatePermitLicensePage =
               >
 
                 {masterDocuments.map(
-                  (item: any) => (
+                  (
+                    item,
+                  ) => (
 
                     <Select.Option
                       key={item.id}
@@ -174,7 +269,7 @@ const CreatePermitLicensePage =
                     >
                       {item.name}
                     </Select.Option>
-                  )
+                  ),
                 )}
 
               </Select>
@@ -231,7 +326,7 @@ const CreatePermitLicensePage =
 
               <Upload
                 beforeUpload={(
-                  file
+                  file,
                 ) => {
 
                   const isPdf =
@@ -241,7 +336,7 @@ const CreatePermitLicensePage =
                   if (!isPdf) {
 
                     message.error(
-                      "Only PDF allowed"
+                      "Only PDF allowed",
                     )
 
                     return Upload.LIST_IGNORE
@@ -256,14 +351,14 @@ const CreatePermitLicensePage =
                   if (!isLt25Mb) {
 
                     message.error(
-                      "Max 25MB"
+                      "Max 25MB",
                     )
 
                     return Upload.LIST_IGNORE
                   }
 
                   setFile(
-                    file as File
+                    file as File,
                   )
 
                   return false
@@ -276,7 +371,11 @@ const CreatePermitLicensePage =
                     <UploadOutlined />
                   }
                 >
-                  Upload PDF
+                  {
+                    isEdit
+                      ? "Upload Revised PDF"
+                      : "Upload PDF"
+                  }
                 </Button>
 
               </Upload>
@@ -288,7 +387,11 @@ const CreatePermitLicensePage =
               htmlType="submit"
               loading={loading}
             >
-              Submit
+              {
+                isEdit
+                  ? "Revise Document"
+                  : "Submit"
+              }
             </Button>
 
           </Form>

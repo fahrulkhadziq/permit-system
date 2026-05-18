@@ -32,10 +32,11 @@ func SetUpRoutes(e *echo.Echo) {
 		})
 	})
 
-	protected.POST("/permit-license", permitHandler.Create)
 	protected.GET("/permit-license/:id", permitHandler.FindByID)
 	protected.GET("/permit-license", permitHandler.FindAll)
 	protected.GET("/permit-license/:id/download", permitHandler.Download)
+	protected.POST("/permit-license", permitHandler.Create)
+	protected.PUT("/permit-license/:id", permitHandler.Update)
 	// HEAD UNIT and DIRECTOR
 	approval := protected.Group("/approval")
 

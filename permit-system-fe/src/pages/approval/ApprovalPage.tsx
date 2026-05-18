@@ -32,6 +32,10 @@ import {
   getUser,
 } from "../../utils/auth"
 
+import {
+  STATUS,
+} from "../../constants/status"
+
 import type {
   PaginationResponse,
   PermitLicenseItem,
@@ -44,6 +48,10 @@ const ApprovalPage = () => {
   const navigate = useNavigate()
 
   const user = getUser()
+
+  const canApprove =
+    user?.role === "HEAD_UNIT" ||
+    user?.role === "DIRECTOR"
 
   const [loading, setLoading] =
     useState(false)
@@ -84,12 +92,35 @@ const ApprovalPage = () => {
 
         setLoading(true)
 
+        const params: any = {
+          page,
+          search,
+        }
+
+        if (
+          user?.role ===
+          "HEAD_UNIT"
+        ) {
+
+          params.status =
+            STATUS
+              .WAITING_HEAD_APPROVAL
+        }
+
+        if (
+          user?.role ===
+          "DIRECTOR"
+        ) {
+
+          params.status =
+            STATUS
+              .WAITING_DIRECTOR_APPROVAL
+        }
+
         const response =
-          await getPermitLicenses({
-            page,
-            search,
-            approval: true,
-          })
+          await getPermitLicenses(
+            params
+          )
 
         setData(response)
 
@@ -114,13 +145,22 @@ const ApprovalPage = () => {
 
       try {
 
-        await approveDocument(selectedId,{notes})
+        await approveDocument(
+          selectedId,
+          {
+            notes,
+          }
+        )
 
         message.success(
           "Document approved"
         )
 
-        setModalApproveOpen(false)
+        setModalApproveOpen(
+          false
+        )
+
+        setNotes("")
 
         fetchData()
 
@@ -139,13 +179,22 @@ const ApprovalPage = () => {
 
       try {
 
-        await rejectDocument(selectedId, { notes })
+        await rejectDocument(
+          selectedId,
+          {
+            notes,
+          }
+        )
 
         message.success(
           "Document rejected"
         )
 
-        setModalRejectOpen(false)
+        setModalRejectOpen(
+          false
+        )
+
+        setNotes("")
 
         fetchData()
 
@@ -158,6 +207,15 @@ const ApprovalPage = () => {
         )
       }
     }
+
+  if (!canApprove) {
+
+    return (
+      <div>
+        Access denied
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -181,6 +239,9 @@ const ApprovalPage = () => {
               setSearch(
                 e.target.value
               )
+            }
+            onPressEnter={() =>
+              fetchData()
             }
           />
 
@@ -282,7 +343,9 @@ const ApprovalPage = () => {
         open={modalApproveOpen}
         title="Approve Document"
         onCancel={() =>
-          setModalApproveOpen(false)
+          setModalApproveOpen(
+            false
+          )
         }
         onOk={handleApprove}
       >
@@ -304,7 +367,9 @@ const ApprovalPage = () => {
         open={modalRejectOpen}
         title="Reject Document"
         onCancel={() =>
-          setModalRejectOpen(false)
+          setModalRejectOpen(
+            false
+          )
         }
         onOk={handleReject}
       >

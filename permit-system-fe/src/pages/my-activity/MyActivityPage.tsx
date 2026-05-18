@@ -26,7 +26,9 @@ import type {
   PermitLicenseItem,
 } from "../../types/permit-license"
 
-import { getUser } from "../../utils/auth"
+import {
+  getUser,
+} from "../../utils/auth"
 
 const { Title } = Typography
 
@@ -42,15 +44,15 @@ const MyActivityPage = () => {
   const [search, setSearch] =
     useState("")
 
+  const [page, setPage] =
+    useState(1)
+
   const [data, setData] =
     useState<
       PaginationResponse<
         PermitLicenseItem
       >
     >()
-
-  const [page, setPage] =
-    useState(1)
 
   const fetchData =
     async () => {
@@ -105,7 +107,8 @@ const MyActivityPage = () => {
       }
     }
 
-     const canUpload = user?.role === "USER_UNIT"
+  const canUpload =
+    user?.role === "USER_UNIT"
 
   return (
     <div>
@@ -122,11 +125,14 @@ const MyActivityPage = () => {
         <Title level={3}>
           My Activity
         </Title>
- {canUpload && (
+
+        {canUpload && (
           <Button
             type="primary"
             onClick={() =>
-              navigate("/my-activity/create")
+              navigate(
+                "/my-activity/create"
+              )
             }
           >
             Upload Document
@@ -215,20 +221,44 @@ const MyActivityPage = () => {
                 "expired_at",
             },
 
-            {
-              title: "Action",
+           {
+            title: "Action",
 
-              render: (_, record) => (
+            render: (_, record) => (
+
+                <Space>
+
                 <Button
-                  onClick={() =>
+                    onClick={() =>
                     navigate(
-                      `/permit-license/${record.id}`
+                        `/permit-license/${record.id}`
                     )
-                  }
+                    }
                 >
-                  Detail
+                    Detail
                 </Button>
-              ),
+
+                {
+                    user?.role ===
+                    "USER_UNIT" &&
+                    record.status ===
+                    "Rejected" && (
+
+                    <Button
+                        type="primary"
+                        onClick={() =>
+                        navigate(
+                            `/my-activity/${record.id}/edit`
+                        )
+                        }
+                    >
+                        Revise
+                    </Button>
+                    )
+                }
+
+                </Space>
+            ),
             },
           ]}
         />

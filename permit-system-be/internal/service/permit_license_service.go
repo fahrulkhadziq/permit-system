@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type PermitLicenseService struct {
@@ -161,4 +162,132 @@ func (s *PermitLicenseService) FindAll(params dto.QueryParams) ([]model.PermitLi
 
 func (s *PermitLicenseService) FindByID(id string) (*model.PermitLicense, error) {
 	return s.Repo.FindByID(id)
+}
+
+func (s *PermitLicenseService) Update(
+	id string,
+	userID string,
+	req dto.UpdatePermitLicenseRequest,
+	file *multipart.FileHeader,
+) error {
+
+	return repository.WithTransaction(
+		func(tx *gorm.DB) error {
+
+			permit, err :=
+				s.Repo.FindByIdForUpdate(
+					tx,
+					id,
+				)
+
+			if err != nil {
+
+				return err
+			}
+
+			if permit.UploadedBy != userID {
+
+				return errors.New(
+					"unauthorized",
+				)
+			}
+
+			if permit.CurrentStatus.Code != constants.StatusRejected {
+
+				return errors.New(
+					"only rejected document can be revised",
+				)
+			}
+
+			waitingStatus, err :=
+				s.Repo.FindStatusByCode(
+					constants.StatusWaitingApproval,
+				)
+
+			if err != nil {
+
+				return err
+			}
+
+			filePath, fileSize, err :=
+				helper.UploadFile(
+					file,
+					"documents",
+				)
+
+			if err != nil {
+
+				return err
+			}
+
+			expiredAt, err :=
+				time.Parse(
+					"2006-01-02",
+					req.ExpiredAt,
+				)
+
+			if err != nil {
+
+				return err
+			}
+
+			permit.MasterDocumentID =
+				req.MasterDocumentID
+
+			permit.DocumentName =
+				req.DocumentName
+
+			permit.Description =
+				req.Description
+
+			permit.ExpiredAt =
+				expiredAt
+
+			permit.FileURL =
+				filePath
+
+			permit.FileSize =
+				fileSize
+
+			permit.CurrentStatusID =
+				waitingStatus.ID.String()
+
+			permit.RejectedReason = ""
+
+			permit.ApprovedAt = nil
+
+			err = s.Repo.UpdateTx(
+				tx,
+				id,
+				permit,
+			)
+
+			if err != nil {
+
+				return err
+			}
+
+			history := model.ApprovalHistory{
+				PermitLicenseID: permit.ID.String(),
+
+				ApproverID: userID,
+
+				StatusID: waitingStatus.ID.String(),
+
+				Notes: "Document revised and resubmitted",
+			}
+
+			err = s.Repo.CreateApprovalHistoryTx(
+				tx,
+				&history,
+			)
+
+			if err != nil {
+
+				return err
+			}
+
+			return nil
+		},
+	)
 }
