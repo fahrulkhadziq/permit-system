@@ -3,9 +3,12 @@ import {
   Col,
   Modal,
   Row,
+  Space,
   Spin,
   Table,
+  Tag,
   Typography,
+  Button,
 } from "antd"
 
 import {
@@ -16,6 +19,10 @@ import {
   useEffect,
   useState,
 } from "react"
+
+import {
+  useNavigate,
+} from "react-router-dom"
 
 import {
   getDashboardStatistics,
@@ -29,9 +36,16 @@ import type {
   DashboardResponse,
 } from "../../types/dashboard"
 
+import type {
+  PaginationResponse,
+  PermitLicenseItem,
+} from "../../types/permit-license"
+
 const { Title } = Typography
 
 const DashboardPage = () => {
+
+  const navigate = useNavigate()
 
   const [loading, setLoading] =
     useState(true)
@@ -39,14 +53,33 @@ const DashboardPage = () => {
   const [data, setData] =
     useState<DashboardResponse>()
 
-  const [modalOpen, setModalOpen] =
-    useState(false)
+  const [
+    modalOpen,
+    setModalOpen,
+  ] = useState(false)
 
-  const [modalTitle, setModalTitle] =
-    useState("")
+  const [
+    modalTitle,
+    setModalTitle,
+  ] = useState("")
 
-  const [documents, setDocuments] =
-    useState<any[]>([])
+  const [
+    selectedStatus,
+    setSelectedStatus,
+  ] = useState("")
+
+  const [
+    documents,
+    setDocuments,
+  ] =
+    useState<
+      PaginationResponse<
+        PermitLicenseItem
+      >
+    >()
+
+  const [page, setPage] =
+    useState(1)
 
   const fetchDashboard =
     async () => {
@@ -68,37 +101,65 @@ const DashboardPage = () => {
       }
     }
 
-  useEffect(() => {
-
-    fetchDashboard()
-
-  }, [])
-
-  const openDocumentModal =
+  const fetchDocuments =
     async (
-      title: string,
       status?: string,
+      currentPage = 1,
     ) => {
 
       try {
 
         const response =
           await getPermitLicenses({
+            page: currentPage,
             status,
           })
 
-        setDocuments(
-          response.data,
-        )
-
-        setModalTitle(title)
-
-        setModalOpen(true)
+        setDocuments(response)
 
       } catch (err) {
 
         console.error(err)
       }
+    }
+
+  useEffect(() => {
+
+    fetchDashboard()
+
+  }, [])
+
+  useEffect(() => {
+
+    if (modalOpen) {
+
+      fetchDocuments(
+        selectedStatus,
+        page,
+      )
+    }
+
+  }, [
+    modalOpen,
+    selectedStatus,
+    page,
+  ])
+
+  const openDocumentModal =
+    (
+      title: string,
+      status?: string,
+    ) => {
+
+      setModalTitle(title)
+
+      setSelectedStatus(
+        status || "",
+      )
+
+      setPage(1)
+
+      setModalOpen(true)
     }
 
   if (loading) {
@@ -129,6 +190,28 @@ const DashboardPage = () => {
     },
   ]
 
+  const getStatusColor =
+    (status: string) => {
+
+      switch (status) {
+
+        case "Approved":
+          return "green"
+
+        case "Rejected":
+          return "red"
+
+        case "Waiting Head Approval":
+          return "orange"
+
+        case "Waiting Director Approval":
+          return "blue"
+
+        default:
+          return "default"
+      }
+    }
+
   return (
     <div>
 
@@ -139,6 +222,7 @@ const DashboardPage = () => {
       <Row gutter={[16, 16]}>
 
         <Col span={6}>
+
           <Card
             hoverable
             onClick={() =>
@@ -147,17 +231,23 @@ const DashboardPage = () => {
               )
             }
           >
+
             <Title level={5}>
               Total Documents
             </Title>
 
             <Title level={2}>
-              {data?.total_documents}
+              {
+                data?.total_documents
+              }
             </Title>
+
           </Card>
+
         </Col>
 
         <Col span={6}>
+
           <Card
             hoverable
             onClick={() =>
@@ -167,8 +257,9 @@ const DashboardPage = () => {
               )
             }
           >
+
             <Title level={5}>
-              Approved
+              Approved Documents
             </Title>
 
             <Title
@@ -181,10 +272,13 @@ const DashboardPage = () => {
                 data?.approved_documents
               }
             </Title>
+
           </Card>
+
         </Col>
 
         <Col span={6}>
+
           <Card
             hoverable
             onClick={() =>
@@ -194,8 +288,9 @@ const DashboardPage = () => {
               )
             }
           >
+
             <Title level={5}>
-              Rejected
+              Rejected Documents
             </Title>
 
             <Title
@@ -208,21 +303,25 @@ const DashboardPage = () => {
                 data?.rejected_documents
               }
             </Title>
+
           </Card>
+
         </Col>
 
         <Col span={6}>
+
           <Card
             hoverable
             onClick={() =>
               openDocumentModal(
-                "Pending Approvals",
+                "Pending Documents",
                 "WAITING_APPROVAL",
               )
             }
           >
+
             <Title level={5}>
-              Pending
+              Pending Approvals
             </Title>
 
             <Title
@@ -235,10 +334,12 @@ const DashboardPage = () => {
                 data?.pending_approvals
               }
             </Title>
+
           </Card>
+
         </Col>
 
-        <Col span={12}>
+        <Col span={14}>
 
           <Card title="Document Statistics">
 
@@ -258,46 +359,104 @@ const DashboardPage = () => {
                     "element-active",
                 },
               ]}
+              onReady={(plot) => {
+
+                plot.on(
+                  "element:click",
+                  (args: any) => {
+
+                    const type =
+                      args.data.data.type
+
+                    if (
+                      type ===
+                      "Approved"
+                    ) {
+
+                      openDocumentModal(
+                        "Approved Documents",
+                        "APPROVED",
+                      )
+                    }
+
+                    if (
+                      type ===
+                      "Rejected"
+                    ) {
+
+                      openDocumentModal(
+                        "Rejected Documents",
+                        "REJECTED",
+                      )
+                    }
+
+                    if (
+                      type ===
+                      "Pending"
+                    ) {
+
+                      openDocumentModal(
+                        "Pending Documents",
+                        "WAITING_APPROVAL",
+                      )
+                    }
+                  },
+                )
+              }}
             />
 
           </Card>
 
         </Col>
 
-        <Col span={12}>
+        <Col span={10}>
 
           <Card title="Quick Insights">
 
-            <p>
-              Active Documents:
-              {" "}
-              <b>
-                {
-                  data?.active_documents
-                }
-              </b>
-            </p>
+            <Space
+              direction="vertical"
+            >
 
-            <p>
-              Expired Documents:
-              {" "}
-              <b>
-                {
-                  data?.expired_documents
-                }
-              </b>
-            </p>
+              <Card
+                size="small"
+              >
+                Active Documents:
+                {" "}
+                <b>
+                  {
+                    data
+                      ?.active_documents
+                  }
+                </b>
+              </Card>
 
-            <p>
-              Not Extended:
-              {" "}
-              <b>
-                {
-                  data
-                    ?.not_extended_documents
-                }
-              </b>
-            </p>
+              <Card
+                size="small"
+              >
+                Expired Documents:
+                {" "}
+                <b>
+                  {
+                    data
+                      ?.expired_documents
+                  }
+                </b>
+              </Card>
+
+              <Card
+                size="small"
+              >
+                Not Extended:
+                {" "}
+                <b>
+                  {
+                    data
+                      ?.not_extended_documents
+                  }
+                </b>
+              </Card>
+
+            </Space>
 
           </Card>
 
@@ -308,7 +467,7 @@ const DashboardPage = () => {
       <Modal
         open={modalOpen}
         footer={null}
-        width={900}
+        width={1000}
         title={modalTitle}
         onCancel={() =>
           setModalOpen(false)
@@ -317,22 +476,90 @@ const DashboardPage = () => {
 
         <Table
           rowKey="id"
-          dataSource={documents}
-          pagination={false}
+          dataSource={
+            documents?.data
+          }
+          pagination={{
+            current:
+              documents?.page,
+
+            pageSize:
+              documents?.limit,
+
+            total:
+              documents?.total_rows,
+
+            onChange: (
+              page,
+            ) =>
+              setPage(page),
+          }}
           columns={[
             {
               title: "Document",
               dataIndex:
                 "document_name",
             },
+
+            {
+              title:
+                "Master Document",
+
+              render:
+                (_, record) =>
+                  record
+                    .master_document
+                    ?.name,
+            },
+
             {
               title: "Status",
-              dataIndex: "status",
+
+              render:
+                (_, record) => (
+
+                  <Tag
+                    color={getStatusColor(
+                      record.status,
+                    )}
+                  >
+                    {
+                      record.status
+                    }
+                  </Tag>
+                ),
             },
+
             {
-              title: "Expired At",
+              title:
+                "Expired At",
+
               dataIndex:
                 "expired_at",
+            },
+
+            {
+              title: "Action",
+
+              render:
+                (_, record) => (
+
+                  <Button
+                    type="primary"
+                    onClick={() => {
+
+                      setModalOpen(
+                        false,
+                      )
+
+                      navigate(
+                        `/permit-license/${record.id}`,
+                      )
+                    }}
+                  >
+                    Detail
+                  </Button>
+                ),
             },
           ]}
         />
@@ -344,3 +571,4 @@ const DashboardPage = () => {
 }
 
 export default DashboardPage
+
