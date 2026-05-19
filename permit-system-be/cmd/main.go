@@ -4,7 +4,6 @@ import (
 	"os"
 	"permit-license/config"
 	"permit-license/internal/cron"
-	"permit-license/internal/database"
 	"permit-license/internal/routes"
 
 	"github.com/labstack/echo/v4"
@@ -18,8 +17,8 @@ func main() {
 
 	cron.StartCron()
 
-	database.Migrate()
-	database.Seed()
+	// database.Migrate()
+	// database.Seed()
 
 	e := echo.New()
 	e.Use(middleware.CORS())
