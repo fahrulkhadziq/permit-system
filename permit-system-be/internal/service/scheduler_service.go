@@ -16,24 +16,64 @@ type SchedulerService struct {
 
 func (s *SchedulerService) SendExpiredReminder() {
 
-	targetDate := time.Now().AddDate(0, 0, 30) // 30 days from now
-
-	permits, err := s.Repo.FindExpiringDocuments(targetDate)
+	permits, err := s.Repo.FindExpiringDocuments()
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
+	today := time.Now()
+
 	for _, permit := range permits {
 
-		headUsers, _ := s.UserRepo.FindByRoleAndUnit("HEAD_UNIT", permit.UnitID)
-		headEmails := helper.ExtractEmails(headUsers)
-		userEmail := helper.UserEmail(&permit.User)
-
-		emails := helper.MergeEmails(
-			headEmails,
-			userEmail,
+		daysLeft := int(
+			permit.ExpiredAt.Sub(today).Hours() / 24,
 		)
+
+		shouldSend := false
+
+		switch daysLeft {
+
+		case 30, 21, 14, 7, 0:
+			shouldSend = true
+		}
+
+		// EXPIRED => EVERY 7 DAYS
+		if daysLeft < 0 {
+
+			expiredDays := daysLeft * -1
+
+			if expiredDays%7 == 0 {
+
+				shouldSend = true
+			}
+		}
+
+		if !shouldSend {
+			continue
+		}
+
+		headUsers, _ :=
+			s.UserRepo.FindByRoleAndUnit(
+				"HEAD_UNIT",
+				permit.UnitID,
+			)
+
+		headEmails :=
+			helper.ExtractEmails(
+				headUsers,
+			)
+
+		userEmail :=
+			helper.UserEmail(
+				&permit.User,
+			)
+
+		emails :=
+			helper.MergeEmails(
+				headEmails,
+				userEmail,
+			)
 
 		url := fmt.Sprintf(
 			"%s/documents/%s",
@@ -41,42 +81,28 @@ func (s *SchedulerService) SendExpiredReminder() {
 			permit.ID.String(),
 		)
 
-		body := helper.ExpirationReminderEmail(
-			permit.DocumentName,
-			url,
-			permit.ExpiredAt.Format(
-				"2006-01-02",
-			),
-		)
+		body :=
+			helper.ExpirationReminderEmail(
+				permit.DocumentName,
+				url,
+				permit.ExpiredAt.Format(
+					"2006-01-02",
+				),
+			)
+
+		subject :=
+			"Document Expiration Reminder"
+
+		if daysLeft < 0 {
+
+			subject =
+				"Document Already Expired"
+		}
 
 		s.EmailService.SendAsync(
 			emails,
-			"Document Expired Reminder",
+			subject,
 			body,
 		)
-	}
-}
-
-func (s *SchedulerService) AutoMarkExpiredDocuments() {
-
-	permits, err := s.Repo.FindExpiredDocuments()
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	var ids []string
-	for _, permit := range permits {
-		ids = append(ids, permit.ID.String())
-	}
-
-	if len(ids) == 0 {
-		return
-	}
-
-	err = s.Repo.MarkExpired(ids)
-	if err != nil {
-		fmt.Println(err.Error())
 	}
 }

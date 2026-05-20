@@ -12,3 +12,7 @@ type DashboardService struct {
 func (s *DashboardService) GetStatistics(unitID *string) (dto.DashboardResponse, error) {
 	return s.Repo.GetStatistics(unitID)
 }
+
+func (s *DashboardService) GetStatisticsAll() (dto.DashboardResponse, error) {
+	return s.Repo.GetStatisticsAll()
+}

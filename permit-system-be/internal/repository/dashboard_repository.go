@@ -12,88 +12,132 @@ import (
 
 type DashboardRepository struct{}
 
-func (r *DashboardRepository) baseQuery(unitID *string) *gorm.DB {
+func (r *DashboardRepository) baseQuery() *gorm.DB {
 
 	query := config.DB.Model(
-		&model.PermitLicense{},
-	)
-
-	if unitID != nil {
-		query = query.Where("unit_id = ?", *unitID)
-	}
+		&model.PermitLicense{}).
+		Where("is_active = ?", true)
 
 	return query
 }
 
 func (r *DashboardRepository) GetStatistics(unitID *string) (dto.DashboardResponse, error) {
+	baseQuery := r.baseQuery().Where(
+		"unit_id = ?",
+		unitID,
+	)
+	return r.buildStatistics(baseQuery)
+
+}
+
+func (r *DashboardRepository) GetStatisticsAll() (dto.DashboardResponse, error) {
+	baseQuery := r.baseQuery()
+	return r.buildStatistics(baseQuery)
+}
+
+func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.DashboardResponse, error) {
+
 	var response dto.DashboardResponse
 
 	now := time.Now()
 
-	baseQuery := r.baseQuery(unitID)
-	baseQuery.Count(&response.TotalDocuments)
+	approvedSubQuery := config.DB.
+		Model(&model.ApprovalStatus{}).
+		Select("id").
+		Where(
+			"code = ?",
+			constants.StatusApproved,
+		)
+
+	pendingSubQuery := config.DB.
+		Model(&model.ApprovalStatus{}).
+		Select("id").
+		Where(
+			"code IN ?",
+			[]string{
+				constants.StatusWaitingApproval,
+				constants.StatusWaitingDirectorApproval,
+			},
+		)
+
+	rejectedSubQuery := config.DB.
+		Model(&model.ApprovalStatus{}).
+		Select("id").
+		Where(
+			"code = ?",
+			constants.StatusRejected,
+		)
+
+	baseQuery.Count(
+		&response.TotalDocuments,
+	)
 
 	baseQuery.
+		Session(&gorm.Session{}).
 		Where(
 			"current_status_id IN (?)",
-			config.DB.
-				Model(&model.ApprovalStatus{}).
-				Select("id").
-				Where("code = ?", constants.StatusApproved),
+			approvedSubQuery,
 		).
-		Where("expired_at >= ?", now).
-		Count(&response.ActiveDocuments)
+		Where(
+			"expired_at >= ?",
+			now,
+		).
+		Count(
+			&response.ActiveDocuments,
+		)
 
 	baseQuery.
-		Where("expired_at < ?", now).
-		Count(&response.ExpiredDocuments)
+		Session(&gorm.Session{}).
+		Where(
+			"expired_at < ?",
+			now,
+		).
+		Count(
+			&response.ExpiredDocuments,
+		)
 
 	baseQuery.
+		Session(&gorm.Session{}).
 		Where(
 			"current_status_id IN (?)",
-			config.DB.
-				Model(&model.ApprovalStatus{}).
-				Select("id").
-				Where("code IN ?",
-					[]string{
-						constants.StatusWaitingApproval,
-						constants.StatusWaitingDirectorApproval,
-					}),
+			pendingSubQuery,
 		).
-		Count(&response.PendingApprovals)
+		Count(
+			&response.PendingApprovals,
+		)
 
 	baseQuery.
+		Session(&gorm.Session{}).
 		Where(
 			"current_status_id IN (?)",
-			config.DB.
-				Model(&model.ApprovalStatus{}).
-				Select("id").
-				Where("code = ?", constants.StatusApproved),
+			approvedSubQuery,
 		).
-		Count(&response.ApprovedDocuments)
+		Count(
+			&response.ApprovedDocuments,
+		)
 
 	baseQuery.
+		Session(&gorm.Session{}).
 		Where(
 			"current_status_id IN (?)",
-			config.DB.
-				Model(&model.ApprovalStatus{}).
-				Select("id").
-				Where("code = ?", constants.StatusRejected),
+			rejectedSubQuery,
 		).
-		Count(&response.RejectedDocuments)
-
-	// NOT EXTENDED
-
-	subQuery := config.DB.
-		Model(&model.PermitLicense{}).
-		Select("related_prev_document_id").
-		Where("related_prev_document_id IS NOT NULL")
+		Count(
+			&response.RejectedDocuments,
+		)
 
 	baseQuery.
-		Where("expired_at < ?", now).
-		Where("id NOT IN (?)", subQuery).
-		Count(&response.NotExtendedDocuments)
+		Session(&gorm.Session{}).
+		Where(
+			"expired_at < ?",
+			now,
+		).
+		Where(
+			"is_extend IS NULL",
+		).
+		Count(
+			&response.NotExtendedDocuments,
+		)
 
 	return response, nil
-
 }

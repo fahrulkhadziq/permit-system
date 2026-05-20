@@ -16,7 +16,6 @@ func StartCron() {
 		"0 8 * * *", // every day at 08.00
 		func() {
 			schedulerService.SendExpiredReminder()
-			schedulerService.AutoMarkExpiredDocuments()
 		},
 	)
 

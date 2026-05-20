@@ -41,11 +41,19 @@ import type {
   PermitLicenseItem,
 } from "../../types/permit-license"
 
+import {
+  getUser,
+} from "../../utils/auth"
+
 const { Title } = Typography
 
 const DashboardPage = () => {
 
-  const navigate = useNavigate()
+  const navigate =
+    useNavigate()
+
+  const user =
+    getUser()
 
   const [loading, setLoading] =
     useState(true)
@@ -179,16 +187,38 @@ const DashboardPage = () => {
         data?.rejected_documents || 0,
     },
     {
-      type: "Pending",
-      value:
-        data?.pending_approvals || 0,
-    },
-    {
       type: "Expired",
       value:
         data?.expired_documents || 0,
     },
   ]
+
+  // HEAD_UNIT
+  if (
+    user?.role ===
+    "HEAD_UNIT"
+  ) {
+
+    chartData.push({
+      type: "Pending",
+      value:
+        data?.pending_approvals || 0,
+    })
+  }
+
+  // DIRECTOR
+  if (
+    user?.role ===
+    "DIRECTOR"
+  ) {
+
+    chartData.push({
+      type:
+        "Director Pending",
+      value:
+        data?.pending_approvals || 0,
+    })
+  }
 
   const getStatusColor =
     (status: string) => {
@@ -308,36 +338,81 @@ const DashboardPage = () => {
 
         </Col>
 
-        <Col span={6}>
+        {/* HEAD UNIT */}
+        {
+          user?.role ===
+            "HEAD_UNIT" && (
 
-          <Card
-            hoverable
-            onClick={() =>
-              openDocumentModal(
-                "Pending Documents",
-                "WAITING_APPROVAL",
-              )
-            }
-          >
+            <Col span={6}>
 
-            <Title level={5}>
-              Pending Approvals
-            </Title>
+              <Card
+                hoverable
+                onClick={() =>
+                  openDocumentModal(
+                    "Pending Head Approval",
+                    "WAITING_APPROVAL",
+                  )
+                }
+              >
 
-            <Title
-              level={2}
-              style={{
-                color: "#faad14",
-              }}
-            >
-              {
-                data?.pending_approvals
-              }
-            </Title>
+                <Title level={5}>
+                  Pending Approvals
+                </Title>
 
-          </Card>
+                <Title
+                  level={2}
+                  style={{
+                    color: "#faad14",
+                  }}
+                >
+                  {
+                    data?.pending_approvals
+                  }
+                </Title>
 
-        </Col>
+              </Card>
+
+            </Col>
+          )
+        }
+
+        {/* DIRECTOR */}
+        {
+          user?.role ===
+            "DIRECTOR" && (
+
+            <Col span={6}>
+
+              <Card
+                hoverable
+                onClick={() =>
+                  openDocumentModal(
+                    "Pending Director Approval",
+                    "WAITING_DIRECTOR_APPROVAL",
+                  )
+                }
+              >
+
+                <Title level={5}>
+                  Director Approvals
+                </Title>
+
+                <Title
+                  level={2}
+                  style={{
+                    color: "#1677ff",
+                  }}
+                >
+                  {
+                    data?.pending_approvals
+                  }
+                </Title>
+
+              </Card>
+
+            </Col>
+          )
+        }
 
         <Col span={14}>
 
@@ -396,8 +471,19 @@ const DashboardPage = () => {
                     ) {
 
                       openDocumentModal(
-                        "Pending Documents",
+                        "Pending Head Approval",
                         "WAITING_APPROVAL",
+                      )
+                    }
+
+                    if (
+                      type ===
+                      "Director Pending"
+                    ) {
+
+                      openDocumentModal(
+                        "Pending Director Approval",
+                        "WAITING_DIRECTOR_APPROVAL",
                       )
                     }
                   },
@@ -415,10 +501,20 @@ const DashboardPage = () => {
 
             <Space
               direction="vertical"
+              style={{
+                width: "100%",
+              }}
             >
 
               <Card
+                hoverable
                 size="small"
+                onClick={() =>
+                  openDocumentModal(
+                    "Active Documents",
+                    "APPROVED",
+                  )
+                }
               >
                 Active Documents:
                 {" "}
@@ -431,6 +527,7 @@ const DashboardPage = () => {
               </Card>
 
               <Card
+                hoverable
                 size="small"
               >
                 Expired Documents:
@@ -444,6 +541,7 @@ const DashboardPage = () => {
               </Card>
 
               <Card
+                hoverable
                 size="small"
               >
                 Not Extended:
@@ -571,4 +669,3 @@ const DashboardPage = () => {
 }
 
 export default DashboardPage
-

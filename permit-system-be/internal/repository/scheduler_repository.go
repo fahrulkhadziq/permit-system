@@ -8,14 +8,20 @@ import (
 
 type SchedulerRepository struct{}
 
-func (r *SchedulerRepository) FindExpiringDocuments(targetDate time.Time) ([]model.PermitLicense, error) {
+func (r *SchedulerRepository) FindExpiringDocuments() ([]model.PermitLicense, error) {
+
 	var permits []model.PermitLicense
 
 	err := config.DB.
 		Preload("User").
-		Preload("Unit").
-		Where("DATE(expired_at) = DATE(?)", targetDate).
-		Where("is_active = ?", true).
+		Where(`
+			current_status_id = ?
+			AND is_extend IS NULL
+			AND is_active = ?
+		`,
+			"202e64d1-656b-4173-b6f3-095536888a17",
+			true,
+		).
 		Find(&permits).Error
 
 	return permits, err
@@ -32,11 +38,4 @@ func (r *SchedulerRepository) FindExpiredDocuments() ([]model.PermitLicense, err
 		Find(&permits).Error
 
 	return permits, err
-}
-
-func (r *SchedulerRepository) MarkExpired(ids []string) error {
-	return config.DB.
-		Model(&model.PermitLicense{}).
-		Where("id IN ?", ids).
-		Update("is_active", false).Error
 }
