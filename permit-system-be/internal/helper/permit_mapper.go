@@ -34,7 +34,7 @@ func ToPermitLicenseDetailsResponse(permit *model.PermitLicense) dto.PermitLicen
 		ApprovedAt:     permit.ApprovedAt,
 		RejectedReason: permit.RejectedReason,
 		IsActive:       permit.IsActive,
-		IsExtend:       permit.IsExtend,
+		IsExtend:       *permit.IsExtend,
 		MasterDocument: dto.MasterDocumentResponse{
 			ID:          permit.MasterDocument.ID.String(),
 			Code:        permit.MasterDocument.Code,

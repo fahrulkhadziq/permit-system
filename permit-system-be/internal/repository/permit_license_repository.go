@@ -183,7 +183,6 @@ func (r *PermitLicenseRepository) UpdateExtendRelation(
 		prevID,
 	).Updates(map[string]interface{}{
 		"related_next_document_id": nextID,
-
-		"is_extend": true,
+		"is_extend":                true,
 	}).Error
 }

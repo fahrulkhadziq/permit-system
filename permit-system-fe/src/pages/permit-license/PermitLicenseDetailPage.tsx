@@ -122,7 +122,7 @@ const PermitLicenseDetailPage =
             {
                 user?.role === "USER_UNIT" &&
                 data?.current_status.code ===
-                "APPROVED" && !data?.is_extend && (
+                "APPROVED" && data?.is_extend == null && (
 
                 <Button
                     type="primary"

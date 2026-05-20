@@ -121,7 +121,6 @@ func (s *PermitLicenseService) Create(req dto.CreatePermitLicenseRequest, fileHe
 				FileSize:              fileHeader.Size,
 				ExpiredAt:             expiredAt,
 				RelatedPrevDocumentID: req.RelatedPrevDocumentID,
-				IsExtend:              false,
 			}
 
 			err = s.Repo.CreatePermitLicense(tx, &permit)

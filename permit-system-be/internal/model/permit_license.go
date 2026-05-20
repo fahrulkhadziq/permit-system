@@ -26,7 +26,7 @@ type PermitLicense struct {
 	RejectedReason string
 
 	IsActive bool `gorm:"default:true"`
-	IsExtend bool `gorm:"default:false"`
+	IsExtend *bool
 
 	MasterDocument MasterDocument `gorm:"foreignKey:MasterDocumentID"`
 	User           User           `gorm:"foreignKey:UploadedBy"`
