@@ -35,3 +35,13 @@ export interface CreatePermitLicensePayload {
 
   file: File
 }
+
+export interface UpdatePermitLicensePayload {
+  master_document_id?: string
+  document_name?: string
+  description?: string
+  expired_at?: string
+  related_prev_document_id?: string
+  file?: File
+  is_extend?: boolean
+}

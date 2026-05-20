@@ -32,7 +32,7 @@ type PermitLicenseDetailResponse struct {
 
 	IsActive bool `json:"is_active"`
 
-	IsExtend bool `json:"is_extend"`
+	IsExtend *bool `json:"is_extend"`
 
 	MasterDocument MasterDocumentResponse `json:"master_document"`
 

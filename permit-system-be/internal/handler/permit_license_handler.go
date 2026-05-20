@@ -175,34 +175,16 @@ func (h *PermitLicenseHandler) Update(c echo.Context) error {
 		)
 	}
 
-	if err := helper.Validate.Struct(req); err != nil {
-
-		return c.JSON(
-			http.StatusBadRequest,
-			map[string]interface{}{
-				"message": err.Error(),
-			},
-		)
-	}
-
-	file, err := c.FormFile("file")
-	if err != nil {
-
-		return c.JSON(
-			http.StatusBadRequest,
-			map[string]interface{}{
-				"message": "file required",
-			},
-		)
-	}
-
 	token := c.Get("user").(*jwt.Token)
 
 	claims := token.Claims.(jwt.MapClaims)
 
 	userID := claims["user_id"].(string)
 
-	err = h.Service.Update(
+	// OPTIONAL FILE
+	file, _ := c.FormFile("file")
+
+	err := h.Service.Update(
 		id,
 		userID,
 		req,
@@ -222,7 +204,7 @@ func (h *PermitLicenseHandler) Update(c echo.Context) error {
 	return c.JSON(
 		http.StatusOK,
 		map[string]interface{}{
-			"message": "document revised successfully",
+			"message": "document updated successfully",
 		},
 	)
 }

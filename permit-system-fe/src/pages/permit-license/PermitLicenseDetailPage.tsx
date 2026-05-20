@@ -29,6 +29,7 @@ import {
 
 import {
   getPermitLicenseDetail,
+  updatePermitLicense,
 } from "../../services/permit-license.service"
 
 import type {
@@ -107,6 +108,32 @@ const PermitLicenseDetailPage =
           setLoading(false)
         }
       }
+
+      const handleNotExtend =
+        async () => {
+          try {
+            await updatePermitLicense(
+              data!.id,
+              {
+                is_extend: false,
+              }
+            )
+
+            message.success(
+              "Document marked as not extended"
+            )
+
+            fetchDetail()
+
+          } catch (err) {
+
+            console.error(err)
+
+            message.error(
+              "Failed update document"
+            )
+          }
+        }
 
     useEffect(() => {
 
@@ -244,16 +271,30 @@ const PermitLicenseDetailPage =
                 data?.current_status.code ===
                 "APPROVED" && data?.is_extend == null && (
 
-                <Button
+                <Space>
+
+                  <Button
                     type="primary"
                     onClick={() =>
-                    navigate(
+                      navigate(
                         `/my-activity/create?reference=${data.id}`
-                    )
+                      )
                     }
-                >
+                  >
                     Extend Permit
-                </Button>
+                  </Button>
+
+                  <Button
+                    danger
+                    onClick={
+                      handleNotExtend
+                    }
+                  >
+                    Not Extend
+                  </Button>
+
+                </Space>
+                
                 )
             }
 

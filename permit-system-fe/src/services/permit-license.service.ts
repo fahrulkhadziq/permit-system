@@ -4,6 +4,7 @@ import type {
   PaginationResponse,
   PermitLicenseItem,
   CreatePermitLicensePayload,
+  UpdatePermitLicensePayload,
 } from "../types/permit-license"
 
 import type {
@@ -114,31 +115,51 @@ export const createPermitLicense =
   async (
     id: string,
     payload:
-      CreatePermitLicensePayload
+      UpdatePermitLicensePayload
   ) => {
 
     const formData =
       new FormData()
 
-    formData.append(
-      "master_document_id",
+    if (
       payload.master_document_id
-    )
+    ) {
 
-    formData.append(
-      "document_name",
+      formData.append(
+        "master_document_id",
+        payload.master_document_id
+      )
+    }
+
+    if (
       payload.document_name
-    )
+    ) {
 
-    formData.append(
-      "description",
+      formData.append(
+        "document_name",
+        payload.document_name
+      )
+    }
+
+    if (
       payload.description
-    )
+    ) {
 
-    formData.append(
-      "expired_at",
+      formData.append(
+        "description",
+        payload.description
+      )
+    }
+
+    if (
       payload.expired_at
-    )
+    ) {
+
+      formData.append(
+        "expired_at",
+        payload.expired_at
+      )
+    }
 
     if (
       payload.related_prev_document_id
@@ -150,10 +171,26 @@ export const createPermitLicense =
       )
     }
 
-    formData.append(
-      "file",
-      payload.file
-    )
+    if (
+      payload.is_extend !==
+      undefined
+    ) {
+
+      formData.append(
+        "is_extend",
+        String(
+          payload.is_extend
+        )
+      )
+    }
+
+    if (payload.file) {
+
+      formData.append(
+        "file",
+        payload.file
+      )
+    }
 
     const response =
       await api.put(

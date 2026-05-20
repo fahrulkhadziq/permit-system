@@ -205,6 +205,7 @@ func (s *PermitLicenseService) Update(
 				return err
 			}
 
+			// ===== OWNER CHECK =====
 			if permit.UploadedBy != userID {
 
 				return errors.New(
@@ -212,10 +213,55 @@ func (s *PermitLicenseService) Update(
 				)
 			}
 
-			if permit.CurrentStatus.Code != constants.StatusRejected {
+			// =========================================
+			// UPDATE IS_EXTEND ONLY
+			// =========================================
 
+			if req.IsExtend != nil {
+
+				permit.IsExtend =
+					req.IsExtend
+
+				err = s.Repo.UpdateTx(
+					tx,
+					id,
+					permit,
+				)
+
+				if err != nil {
+
+					return err
+				}
+
+				return nil
+			}
+
+			// =========================================
+			// REVISE DOCUMENT
+			// =========================================
+
+			if permit.CurrentStatus.Code != constants.StatusRejected {
 				return errors.New(
 					"only rejected document can be revised",
+				)
+			}
+
+			// VALIDATION
+
+			if req.MasterDocumentID == nil ||
+				req.DocumentName == nil ||
+				req.Description == nil ||
+				req.ExpiredAt == nil {
+
+				return errors.New(
+					"incomplete request",
+				)
+			}
+
+			if file == nil {
+
+				return errors.New(
+					"file required",
 				)
 			}
 
@@ -243,7 +289,7 @@ func (s *PermitLicenseService) Update(
 			expiredAt, err :=
 				time.Parse(
 					"2006-01-02",
-					req.ExpiredAt,
+					*req.ExpiredAt,
 				)
 
 			if err != nil {
@@ -252,13 +298,13 @@ func (s *PermitLicenseService) Update(
 			}
 
 			permit.MasterDocumentID =
-				req.MasterDocumentID
+				*req.MasterDocumentID
 
 			permit.DocumentName =
-				req.DocumentName
+				*req.DocumentName
 
 			permit.Description =
-				req.Description
+				*req.Description
 
 			permit.ExpiredAt =
 				expiredAt
@@ -272,9 +318,11 @@ func (s *PermitLicenseService) Update(
 			permit.CurrentStatusID =
 				waitingStatus.ID.String()
 
-			permit.RejectedReason = ""
+			permit.RejectedReason =
+				""
 
-			permit.ApprovedAt = nil
+			permit.ApprovedAt =
+				nil
 
 			err = s.Repo.UpdateTx(
 				tx,
@@ -297,10 +345,11 @@ func (s *PermitLicenseService) Update(
 				Notes: "Document revised and resubmitted",
 			}
 
-			err = s.Repo.CreateApprovalHistoryTx(
-				tx,
-				&history,
-			)
+			err =
+				s.Repo.CreateApprovalHistoryTx(
+					tx,
+					&history,
+				)
 
 			if err != nil {
 
@@ -310,4 +359,5 @@ func (s *PermitLicenseService) Update(
 			return nil
 		},
 	)
+
 }
