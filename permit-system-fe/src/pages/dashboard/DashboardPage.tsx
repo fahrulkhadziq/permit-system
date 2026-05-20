@@ -354,8 +354,8 @@ const DashboardPage = () => {
                 hoverable
                 onClick={() =>
                   openDocumentModal(
-                    "Pending Head Approval",
-                    "WAITING_APPROVAL",
+                    "Pending Approval",
+                    "WAITING_HEAD_APPROVAL",
                   )
                 }
               >
@@ -392,7 +392,7 @@ const DashboardPage = () => {
                 hoverable
                 onClick={() =>
                   openDocumentModal(
-                    "Pending Director Approval",
+                    "Pending Approval",
                     "WAITING_DIRECTOR_APPROVAL",
                   )
                 }

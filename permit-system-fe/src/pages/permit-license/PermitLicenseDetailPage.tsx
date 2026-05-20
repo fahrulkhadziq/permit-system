@@ -7,6 +7,9 @@ import {
   Space,
   Tag,
   Typography,
+  Modal,
+  Input,
+  message,
 } from "antd"
 
 import {
@@ -36,6 +39,15 @@ import {
   getUser,
 } from "../../utils/auth"
 
+import {
+  approveDocument,
+  rejectDocument,
+} from "../../services/approval.service"
+
+import {
+  STATUS,
+} from "../../constants/status"
+
 const { Title, Text } =
   Typography
 
@@ -55,6 +67,22 @@ const PermitLicenseDetailPage =
       useState<
         PermitLicenseDetailResponse
       >()
+
+    const [
+      modalApproveOpen,
+      setModalApproveOpen,
+    ] = useState(false)
+
+    const [
+      modalRejectOpen,
+      setModalRejectOpen,
+    ] = useState(false)
+
+    const [notes, setNotes] =
+      useState("")
+
+    const [actionLoading, setActionLoading] =
+      useState(false)
 
     const fetchDetail =
       async () => {
@@ -85,6 +113,98 @@ const PermitLicenseDetailPage =
       fetchDetail()
 
     }, [id])
+
+    const canApprove =
+      (
+        user?.role === "HEAD_UNIT" &&
+        data?.current_status.code ===
+          STATUS.WAITING_HEAD_APPROVAL
+      ) ||
+      (
+        user?.role === "DIRECTOR" &&
+        data?.current_status.code ===
+          STATUS.WAITING_DIRECTOR_APPROVAL
+      )
+
+      const handleApprove =
+        async () => {
+
+          if (!data?.id) return
+
+          try {
+
+            setActionLoading(true)
+
+            await approveDocument(
+              data.id,
+              {
+                notes,
+              },
+            )
+
+            message.success(
+              "Document approved",
+            )
+
+            setModalApproveOpen(false)
+
+            setNotes("")
+
+            fetchDetail()
+
+          } catch (err) {
+
+            console.error(err)
+
+            message.error(
+              "Approve failed",
+            )
+
+          } finally {
+
+            setActionLoading(false)
+          }
+        }
+
+      const handleReject =
+        async () => {
+
+          if (!data?.id) return
+
+          try {
+
+            setActionLoading(true)
+
+            await rejectDocument(
+              data.id,
+              {
+                notes,
+              },
+            )
+
+            message.success(
+              "Document rejected",
+            )
+
+            setModalRejectOpen(false)
+
+            setNotes("")
+
+            fetchDetail()
+
+          } catch (err) {
+
+            console.error(err)
+
+            message.error(
+              "Reject failed",
+            )
+
+          } finally {
+
+            setActionLoading(false)
+          }
+        }
 
     return (
       <div>
@@ -135,6 +255,42 @@ const PermitLicenseDetailPage =
                     Extend Permit
                 </Button>
                 )
+            }
+
+            {
+              (
+                user?.role === "HEAD_UNIT" ||
+                user?.role === "DIRECTOR"
+              ) && (
+
+                <Space>
+
+                  <Button
+                    type="primary"
+                    disabled={!canApprove}
+                    onClick={() =>
+                      setModalApproveOpen(
+                        true,
+                      )
+                    }
+                  >
+                    Approve
+                  </Button>
+
+                  <Button
+                    danger
+                    disabled={!canApprove}
+                    onClick={() =>
+                      setModalRejectOpen(
+                        true,
+                      )
+                    }
+                  >
+                    Reject
+                  </Button>
+
+                </Space>
+              )
             }
 
             </Space>
@@ -343,6 +499,55 @@ const PermitLicenseDetailPage =
 
         </Card>
 
+        <Modal
+          open={modalApproveOpen}
+          title="Approve Document"
+          confirmLoading={actionLoading}
+          onCancel={() =>
+            setModalApproveOpen(
+              false,
+            )
+          }
+          onOk={handleApprove}
+        >
+
+          <Input.TextArea
+            rows={4}
+            placeholder="Notes"
+            value={notes}
+            onChange={(e) =>
+              setNotes(
+                e.target.value,
+              )
+            }
+          />
+
+        </Modal>
+
+        <Modal
+          open={modalRejectOpen}
+          title="Reject Document"
+          confirmLoading={actionLoading}
+          onCancel={() =>
+            setModalRejectOpen(
+              false,
+            )
+          }
+          onOk={handleReject}
+        >
+
+          <Input.TextArea
+            rows={4}
+            placeholder="Reject reason"
+            value={notes}
+            onChange={(e) =>
+              setNotes(
+                e.target.value,
+              )
+            }
+          />
+
+        </Modal>
       </div>
     )
   }

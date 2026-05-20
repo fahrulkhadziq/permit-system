@@ -9,8 +9,8 @@ type DashboardService struct {
 	Repo repository.DashboardRepository
 }
 
-func (s *DashboardService) GetStatistics(unitID string) (dto.DashboardResponse, error) {
-	return s.Repo.GetStatistics(unitID)
+func (s *DashboardService) GetStatistics(unitID *string, role string) (dto.DashboardResponse, error) {
+	return s.Repo.GetStatistics(unitID, role)
 }
 
 func (s *DashboardService) GetStatisticsAll() (dto.DashboardResponse, error) {

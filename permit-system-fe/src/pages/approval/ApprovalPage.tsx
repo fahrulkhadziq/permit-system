@@ -298,39 +298,6 @@ const ApprovalPage = () => {
                   >
                     Detail
                   </Button>
-
-                  <Button
-                    type="primary"
-                    onClick={() => {
-
-                      setSelectedId(
-                        record.id
-                      )
-
-                      setModalApproveOpen(
-                        true
-                      )
-                    }}
-                  >
-                    Approve
-                  </Button>
-
-                  <Button
-                    danger
-                    onClick={() => {
-
-                      setSelectedId(
-                        record.id
-                      )
-
-                      setModalRejectOpen(
-                        true
-                      )
-                    }}
-                  >
-                    Reject
-                  </Button>
-
                 </Space>
               ),
             },

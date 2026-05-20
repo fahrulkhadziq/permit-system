@@ -44,7 +44,8 @@ func (h *DashboardHandler) GetStatistics(c echo.Context) error {
 
 	data, err :=
 		h.Service.GetStatistics(
-			unitID,
+			&unitID,
+			role,
 		)
 
 	if err != nil {

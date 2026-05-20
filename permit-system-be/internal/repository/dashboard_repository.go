@@ -21,7 +21,7 @@ func (r *DashboardRepository) baseQuery() *gorm.DB {
 	return query
 }
 
-func (r *DashboardRepository) GetStatistics(unitID string) (dto.DashboardResponse, error) {
+func (r *DashboardRepository) GetStatistics(unitID *string, role string) (dto.DashboardResponse, error) {
 	query := r.baseQuery().
 		Where(
 			"unit_id = ?",
@@ -30,17 +30,23 @@ func (r *DashboardRepository) GetStatistics(unitID string) (dto.DashboardRespons
 
 	return r.buildStatistics(
 		query,
+		role,
 	)
 
 }
 
 func (r *DashboardRepository) GetStatisticsAll() (dto.DashboardResponse, error) {
+
+	query := r.baseQuery()
+	role := "DIRECTOR"
+
 	return r.buildStatistics(
-		r.baseQuery(),
+		query,
+		role,
 	)
 }
 
-func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.DashboardResponse, error) {
+func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB, role string) (dto.DashboardResponse, error) {
 
 	var response dto.DashboardResponse
 
@@ -54,16 +60,17 @@ func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.Dashboard
 			constants.StatusApproved,
 		)
 
+	pendingStatus := constants.StatusWaitingApproval
+
+	if role == "DIRECTOR" {
+		pendingStatus =
+			constants.StatusWaitingDirectorApproval
+	}
+
 	pendingSubQuery := config.DB.
 		Model(&model.ApprovalStatus{}).
 		Select("id").
-		Where(
-			"code IN ?",
-			[]string{
-				constants.StatusWaitingApproval,
-				constants.StatusWaitingDirectorApproval,
-			},
-		)
+		Where("code = ?", pendingStatus)
 
 	rejectedSubQuery := config.DB.
 		Model(&model.ApprovalStatus{}).
