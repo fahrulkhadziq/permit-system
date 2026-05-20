@@ -21,15 +21,16 @@ func (r *DashboardRepository) baseQuery() *gorm.DB {
 	return query
 }
 
-func (r *DashboardRepository) GetStatistics(unitID *string) (dto.DashboardResponse, error) {
-	baseQuery := r.baseQuery()
-	if unitID != nil {
-		baseQuery = baseQuery.Where(
+func (r *DashboardRepository) GetStatistics(unitID string) (dto.DashboardResponse, error) {
+	query := r.baseQuery().
+		Where(
 			"unit_id = ?",
-			*unitID,
+			unitID,
 		)
-	}
-	return r.buildStatistics(baseQuery)
+
+	return r.buildStatistics(
+		query,
+	)
 
 }
 

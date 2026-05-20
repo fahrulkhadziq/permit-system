@@ -9,7 +9,7 @@ type DashboardService struct {
 	Repo repository.DashboardRepository
 }
 
-func (s *DashboardService) GetStatistics(unitID *string) (dto.DashboardResponse, error) {
+func (s *DashboardService) GetStatistics(unitID string) (dto.DashboardResponse, error) {
 	return s.Repo.GetStatistics(unitID)
 }
 

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"permit-license/internal/dto"
 	"permit-license/internal/service"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -18,24 +17,48 @@ func (h *DashboardHandler) GetStatistics(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	role := claims["role"].(string)
-	var (
-		data dto.DashboardResponse
-		err  error
-	)
+	if role == "DIRECTOR" {
 
-	if role != "DIRECTOR" {
-		data, err = h.Service.GetStatisticsAll()
-	} else {
-		unitID := claims["unit_id"].(string)
-		data, err = h.Service.GetStatistics(&unitID)
+		data, err :=
+			h.Service.GetStatisticsAll()
+
+		if err != nil {
+
+			return c.JSON(
+				http.StatusBadRequest,
+				map[string]interface{}{
+					"message": err.Error(),
+				},
+			)
+		}
+
+		return c.JSON(
+			http.StatusOK,
+			data,
+		)
 	}
+	// USER UNIT / HEAD UNIT
+
+	unitID :=
+		claims["unit_id"].(string)
+
+	data, err :=
+		h.Service.GetStatistics(
+			unitID,
+		)
 
 	if err != nil {
-		return c.JSON(http.StatusBadRequest,
+
+		return c.JSON(
+			http.StatusBadRequest,
 			map[string]interface{}{
 				"message": err.Error(),
 			},
 		)
 	}
-	return c.JSON(http.StatusOK, data)
+
+	return c.JSON(
+		http.StatusOK,
+		data,
+	)
 }
