@@ -22,17 +22,21 @@ func (r *DashboardRepository) baseQuery() *gorm.DB {
 }
 
 func (r *DashboardRepository) GetStatistics(unitID *string) (dto.DashboardResponse, error) {
-	baseQuery := r.baseQuery().Where(
-		"unit_id = ?",
-		unitID,
-	)
+	baseQuery := r.baseQuery()
+	if unitID != nil {
+		baseQuery = baseQuery.Where(
+			"unit_id = ?",
+			*unitID,
+		)
+	}
 	return r.buildStatistics(baseQuery)
 
 }
 
 func (r *DashboardRepository) GetStatisticsAll() (dto.DashboardResponse, error) {
-	baseQuery := r.baseQuery()
-	return r.buildStatistics(baseQuery)
+	return r.buildStatistics(
+		r.baseQuery(),
+	)
 }
 
 func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.DashboardResponse, error) {
@@ -68,9 +72,15 @@ func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.Dashboard
 			constants.StatusRejected,
 		)
 
-	baseQuery.Count(
-		&response.TotalDocuments,
-	)
+	// TOTAL DOCUMENTS
+
+	baseQuery.
+		Session(&gorm.Session{}).
+		Count(
+			&response.TotalDocuments,
+		)
+
+	// ACTIVE DOCUMENTS
 
 	baseQuery.
 		Session(&gorm.Session{}).
@@ -86,6 +96,8 @@ func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.Dashboard
 			&response.ActiveDocuments,
 		)
 
+	// EXPIRED DOCUMENTS
+
 	baseQuery.
 		Session(&gorm.Session{}).
 		Where(
@@ -95,6 +107,8 @@ func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.Dashboard
 		Count(
 			&response.ExpiredDocuments,
 		)
+
+	// PENDING APPROVALS
 
 	baseQuery.
 		Session(&gorm.Session{}).
@@ -106,6 +120,8 @@ func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.Dashboard
 			&response.PendingApprovals,
 		)
 
+	// APPROVED DOCUMENTS
+
 	baseQuery.
 		Session(&gorm.Session{}).
 		Where(
@@ -116,6 +132,8 @@ func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.Dashboard
 			&response.ApprovedDocuments,
 		)
 
+	// REJECTED DOCUMENTS
+
 	baseQuery.
 		Session(&gorm.Session{}).
 		Where(
@@ -125,6 +143,8 @@ func (r *DashboardRepository) buildStatistics(baseQuery *gorm.DB) (dto.Dashboard
 		Count(
 			&response.RejectedDocuments,
 		)
+
+	// NOT EXTENDED
 
 	baseQuery.
 		Session(&gorm.Session{}).

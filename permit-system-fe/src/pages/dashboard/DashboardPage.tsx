@@ -307,36 +307,41 @@ const DashboardPage = () => {
 
         </Col>
 
-        <Col span={6}>
+        {
+          user?.role === "USER_UNIT" && (
 
-          <Card
-            hoverable
-            onClick={() =>
-              openDocumentModal(
-                "Rejected Documents",
-                "REJECTED",
-              )
-            }
-          >
+            <Col span={6}>
 
-            <Title level={5}>
-              Rejected Documents
-            </Title>
+              <Card
+                hoverable
+                onClick={() =>
+                  openDocumentModal(
+                    "Rejected Documents",
+                    "REJECTED",
+                  )
+                }
+              >
 
-            <Title
-              level={2}
-              style={{
-                color: "#ff4d4f",
-              }}
-            >
-              {
-                data?.rejected_documents
-              }
-            </Title>
+                <Title level={5}>
+                  Rejected Documents
+                </Title>
 
-          </Card>
+                <Title
+                  level={2}
+                  style={{
+                    color: "#ff4d4f",
+                  }}
+                >
+                  {
+                    data?.rejected_documents
+                  }
+                </Title>
 
-        </Col>
+              </Card>
+
+            </Col>
+          )
+        }
 
         {/* HEAD UNIT */}
         {
