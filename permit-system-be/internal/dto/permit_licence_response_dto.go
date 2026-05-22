@@ -9,6 +9,7 @@ type PermitLicenseResponse struct {
 	FileURL               string  `json:"file_url"`
 	FileSize              int64   `json:"file_size"`
 	ExpiredAt             string  `json:"expired_at"`
+	IsExtend              *bool   `json:"is_extend"`
 	Status                string  `json:"status"`
 	MasterDocument        string  `json:"master_document"`
 	UploadedBy            string  `json:"uploaded_by"`

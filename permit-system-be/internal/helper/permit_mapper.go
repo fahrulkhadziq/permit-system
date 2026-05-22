@@ -14,6 +14,7 @@ func ToPermitLicenseResponse(permit model.PermitLicense) dto.PermitLicenseRespon
 		FileURL:               permit.FileURL,
 		FileSize:              permit.FileSize,
 		ExpiredAt:             permit.ExpiredAt.Format("2006-01-02"),
+		IsExtend:              permit.IsExtend,
 		Status:                permit.CurrentStatus.Name,
 		MasterDocument:        permit.MasterDocument.Name,
 		UploadedBy:            permit.User.FullName,
